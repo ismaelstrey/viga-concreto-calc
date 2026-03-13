@@ -4,7 +4,6 @@
  * Layout: Painel esquerdo inputs, área central/direita visualizações
  */
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Zap, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { DimensionsInput } from "@/components/DimensionsInput";
