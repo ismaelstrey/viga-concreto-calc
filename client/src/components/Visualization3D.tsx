@@ -169,8 +169,6 @@ export function Visualization3D({
 
       {/* Controles */}
       <OrbitControls
-        autoRotate
-        autoRotateSpeed={1.5}
         enableZoom
         enablePan
         minDistance={5}

@@ -178,9 +178,9 @@ export default defineConfig(({ command, mode }) => {
     react(),
     tailwindcss(),
     vitePluginAnalytics(env.VITE_ANALYTICS_ENDPOINT, env.VITE_ANALYTICS_WEBSITE_ID),
-    vitePluginManusRuntime(),
   ];
   if (command === "serve") {
+    plugins.push(vitePluginManusRuntime());
     plugins.push(vitePluginManusDebugCollector());
   }
 
