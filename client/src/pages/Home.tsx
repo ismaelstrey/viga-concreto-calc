@@ -4,7 +4,6 @@
  * Layout: Painel esquerdo inputs, área central/direita visualizações
  */
 
-import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Zap, Save } from "lucide-react";
 import { DimensionsInput } from "@/components/DimensionsInput";
@@ -14,25 +13,11 @@ import { useBeamCalculator } from "@/hooks/useBeamCalculator";
 import { Visualization2D } from "@/components/Visualization2D";
 import { Visualization3D } from "@/components/Visualization3D";
 import { WeightDistributionChart } from "@/components/WeightDistributionChart";
-import { generateDecisionSupport } from "@/lib/beamCalculations";
-import { DecisionSupportPanel } from "@/components/DecisionSupportPanel";
 import { EffortDiagram2D } from "@/components/EffortDiagram2D";
+import { EngineeringResultsPanel } from "@/components/EngineeringResultsPanel";
 
 export default function Home() {
   const calculator = useBeamCalculator();
-  const decisionSupport = useMemo(() => {
-    if (!calculator.results) {
-      return null;
-    }
-
-    return generateDecisionSupport(
-      calculator.dimensions,
-      calculator.loads,
-      calculator.reinforcement,
-      calculator.results
-    );
-  }, [calculator.dimensions, calculator.loads, calculator.reinforcement, calculator.results]);
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -229,50 +214,11 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Resultados Técnicos */}
-                <div className="bg-card border border-border rounded-lg p-6">
-                  <h3 className="text-sm font-bold text-foreground mb-4">
-                    RESULTADOS TÉCNICOS
-                  </h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="p-4 bg-secondary/30 rounded border border-border/50">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Momento Máximo
-                      </p>
-                      <p className="text-lg font-bold text-primary">
-                        {calculator.results.maxBendingMoment.toFixed(2)} kN·m
-                      </p>
-                    </div>
-                    <div className="p-4 bg-secondary/30 rounded border border-border/50">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Cortante Máximo
-                      </p>
-                      <p className="text-lg font-bold text-primary">
-                        {calculator.results.maxShearForce.toFixed(2)} kN
-                      </p>
-                    </div>
-                    <div className="p-4 bg-secondary/30 rounded border border-border/50">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Flecha Máxima
-                      </p>
-                      <p className="text-lg font-bold text-primary">
-                        {calculator.results.deflection.toFixed(2)} mm
-                      </p>
-                    </div>
-                    <div className="p-4 bg-secondary/30 rounded border border-border/50">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Peso Total
-                      </p>
-                      <p className="text-lg font-bold text-accent">
-                        {calculator.results.totalWeight.toFixed(0)} kg
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {decisionSupport && (
-                  <DecisionSupportPanel decisionSupport={decisionSupport} />
-                )}
+                <EngineeringResultsPanel
+                  results={calculator.results}
+                  dimensions={calculator.dimensions}
+                  reinforcement={calculator.reinforcement}
+                />
 
                 <EffortDiagram2D
                   dimensions={calculator.dimensions}
