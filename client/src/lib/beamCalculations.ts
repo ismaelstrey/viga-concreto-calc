@@ -11,6 +11,9 @@ import {
   ReinforcementConfig,
   StructuralResults,
   RebarInfo,
+  BeamDecisionSupport,
+  BeamAlternativeScenario,
+  BeamActionRecommendation,
   CONCRETE_DENSITY,
   STEEL_DENSITY,
   CONCRETE_STRENGTH,
@@ -292,4 +295,156 @@ export function validateLoads(loads: LoadConfiguration): string[] {
     errors.push("Carga pontual deve estar entre 0 e 500 kN");
 
   return errors;
+}
+
+function buildRecommendation(
+  title: string,
+  impact: BeamActionRecommendation["impact"],
+  description: string
+): BeamActionRecommendation {
+  return { title, impact, description };
+}
+
+export function generateDecisionSupport(
+  dimensions: BeamDimensions,
+  loads: LoadConfiguration,
+  reinforcement: ReinforcementConfig,
+  results: StructuralResults
+): BeamDecisionSupport {
+  const recommendations: BeamActionRecommendation[] = [];
+
+  if (!results.isSafe) {
+    recommendations.push(
+      buildRecommendation(
+        "Aumentar capacidade resistente",
+        "high",
+        "Priorize aumentar a altura da viga em 5 a 10 cm ou incluir barras inferiores adicionais para reduzir a utilização estrutural."
+      )
+    );
+  }
+
+  if (results.bendingMomentUtilization > 85) {
+    recommendations.push(
+      buildRecommendation(
+        "Reduzir risco de flexão",
+        "high",
+        "A flexão está próxima do limite. Reforce a armadura inferior ou aumente a altura útil para ampliar o braço de alavanca."
+      )
+    );
+  }
+
+  if (results.shearUtilization > 85) {
+    recommendations.push(
+      buildRecommendation(
+        "Reforçar cisalhamento",
+        "medium",
+        "Diminua o espaçamento dos estribos para 10 cm nas regiões de apoio para elevar a resistência ao corte."
+      )
+    );
+  }
+
+  if (results.deflectionUtilization > 75) {
+    recommendations.push(
+      buildRecommendation(
+        "Controlar flecha",
+        "medium",
+        "Para reduzir deformações, prefira aumentar a altura da seção antes de ampliar apenas a largura."
+      )
+    );
+  }
+
+  if (results.totalWeight > 2500 && results.isSafe) {
+    recommendations.push(
+      buildRecommendation(
+        "Otimizar custo de material",
+        "low",
+        "A viga está segura e pesada. Avalie reduzir 1 barra superior ou aumentar o espaçamento de estribos para economizar aço."
+      )
+    );
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push(
+      buildRecommendation(
+        "Projeto equilibrado",
+        "low",
+        "Os indicadores estão em faixa confortável. Mantenha os parâmetros atuais e valide em campo com controle de execução."
+      )
+    );
+  }
+
+  const scenarios: Array<{
+    name: string;
+    focus: BeamAlternativeScenario["focus"];
+    results: StructuralResults;
+  }> = [
+    {
+      name: "Leve",
+      focus: "economia",
+      results: calculateBeamResults(
+        dimensions,
+        loads,
+        {
+          ...reinforcement,
+          topRebars: {
+            ...reinforcement.topRebars,
+            quantity: Math.max(2, reinforcement.topRebars.quantity - 1),
+          },
+          stirrups: {
+            ...reinforcement.stirrups,
+            spacing: Math.min(20, reinforcement.stirrups.spacing + 2),
+          },
+        }
+      ),
+    },
+    {
+      name: "Balanceada",
+      focus: "equilibrio",
+      results,
+    },
+    {
+      name: "Robusta",
+      focus: "seguranca",
+      results: calculateBeamResults(
+        {
+          ...dimensions,
+          height: Math.min(dimensions.height + 5, 150),
+        },
+        loads,
+        {
+          ...reinforcement,
+          bottomRebars: {
+            ...reinforcement.bottomRebars,
+            quantity: reinforcement.bottomRebars.quantity + 1,
+          },
+          stirrups: {
+            ...reinforcement.stirrups,
+            spacing: Math.max(10, reinforcement.stirrups.spacing - 2),
+          },
+        }
+      ),
+    },
+  ];
+
+  const alternatives: BeamAlternativeScenario[] = scenarios.map((scenario) => ({
+    name: scenario.name,
+    focus: scenario.focus,
+    estimatedWeightDelta:
+      ((scenario.results.totalWeight - results.totalWeight) /
+        Math.max(results.totalWeight, 1)) *
+      100,
+    estimatedSafetyFactor: scenario.results.safetyFactor,
+    estimatedMomentUtilization: scenario.results.bendingMomentUtilization,
+    isSafe: scenario.results.isSafe,
+  }));
+
+  const summary = results.isSafe
+    ? `Viga segura com fator ${results.safetyFactor.toFixed(2)}. Decisão recomendada: manter o cenário balanceado e ajustar apenas se houver meta de economia.`
+    : `Viga crítica (fator ${results.safetyFactor.toFixed(2)}). Decisão recomendada: migrar para cenário robusto e revisar armadura antes da execução.`;
+
+  return {
+    summary,
+    recommendations,
+    alternatives,
+  };
 }
