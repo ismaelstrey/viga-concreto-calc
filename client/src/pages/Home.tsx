@@ -5,7 +5,7 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { Zap, Save } from "lucide-react";
+import { Zap, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { DimensionsInput } from "@/components/DimensionsInput";
 import { LoadsInput } from "@/components/LoadsInput";
 import { ReinforcementInput } from "@/components/ReinforcementInput";
@@ -18,6 +18,7 @@ import { EngineeringResultsPanel } from "@/components/EngineeringResultsPanel";
 
 export default function Home() {
   const calculator = useBeamCalculator();
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -54,7 +55,7 @@ export default function Home() {
       <main className="max-w-full mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6 min-h-[calc(100vh-80px)]">
           {/* Painel Esquerdo - Inputs */}
-          <div className="lg:col-span-1 space-y-6 overflow-y-auto max-h-[calc(100vh-120px)]">
+          <div className="lg:col-span-1 space-y-6">
             {/* Seção Parâmetros */}
             <div>
               <h2 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
@@ -74,34 +75,6 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Materiais */}
-                <div>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    Materiais
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-2 block">
-                        fck (MPa)
-                      </label>
-                      <select className="w-full px-3 py-2 bg-input border border-border rounded text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary">
-                        <option>20 MPa</option>
-                        <option>25 MPa</option>
-                        <option>30 MPa</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-2 block">
-                        Tipo do Aço
-                      </label>
-                      <select className="w-full px-3 py-2 bg-input border border-border rounded text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary">
-                        <option>CA-50</option>
-                        <option>CA-60</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Carregamento */}
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
@@ -114,16 +87,67 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Armadura */}
-                <div>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    Armadura
-                  </h3>
-                  <ReinforcementInput
-                    reinforcement={calculator.reinforcement}
-                    onChange={calculator.updateReinforcement}
-                  />
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAdvancedSettings((prev) => !prev)}
+                    className="w-full justify-between border-border hover:bg-secondary"
+                  >
+                    {showAdvancedSettings
+                      ? "Ocultar parâmetros avançados"
+                      : "Exibir parâmetros avançados"}
+                    {showAdvancedSettings ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
+
+                {showAdvancedSettings && (
+                  <>
+                    {/* Materiais */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                        Materiais
+                      </h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-2 block">
+                            fck (MPa)
+                          </label>
+                          <select className="w-full px-3 py-2 bg-input border border-border rounded text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option>20 MPa</option>
+                            <option>25 MPa</option>
+                            <option>30 MPa</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground mb-2 block">
+                            Tipo do Aço
+                          </label>
+                          <select className="w-full px-3 py-2 bg-input border border-border rounded text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option>CA-50</option>
+                            <option>CA-60</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Armadura */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                        Armadura
+                      </h3>
+                      <ReinforcementInput
+                        reinforcement={calculator.reinforcement}
+                        onChange={calculator.updateReinforcement}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
