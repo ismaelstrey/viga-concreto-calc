@@ -4,6 +4,7 @@
  * Layout: Painel esquerdo inputs, área central/direita visualizações
  */
 
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Zap, Save, ChevronDown, ChevronUp } from "lucide-react";
 import { DimensionsInput } from "@/components/DimensionsInput";
@@ -18,7 +19,7 @@ import { EngineeringResultsPanel } from "@/components/EngineeringResultsPanel";
 
 export default function Home() {
   const calculator = useBeamCalculator();
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = React.useState(false);
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
