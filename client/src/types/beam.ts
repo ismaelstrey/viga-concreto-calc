@@ -86,6 +86,27 @@ export interface VisualizationData {
   results: StructuralResults;
 }
 
+export interface BeamActionRecommendation {
+  title: string;
+  impact: "high" | "medium" | "low";
+  description: string;
+}
+
+export interface BeamAlternativeScenario {
+  name: string;
+  focus: "economia" | "equilibrio" | "seguranca";
+  estimatedWeightDelta: number;
+  estimatedSafetyFactor: number;
+  estimatedMomentUtilization: number;
+  isSafe: boolean;
+}
+
+export interface BeamDecisionSupport {
+  summary: string;
+  recommendations: BeamActionRecommendation[];
+  alternatives: BeamAlternativeScenario[];
+}
+
 // Constantes de projeto
 export const CONCRETE_DENSITY = 2400; // kg/m³
 export const STEEL_DENSITY = 7850; // kg/m³
