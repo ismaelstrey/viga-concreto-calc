@@ -2,7 +2,8 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
+import { fileURLToPath } from "node:url";
+import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 // =============================================================================
@@ -10,7 +11,7 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 // Writes browser logs directly to files, trimmed when exceeding size limit
 // =============================================================================
 
-const PROJECT_ROOT = import.meta.dirname;
+const PROJECT_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
 const MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024; // 1MB per log file
 const TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6); // Trim to 60% to avoid constant re-trimming
@@ -77,10 +78,8 @@ function vitePluginManusDebugCollector(): Plugin {
   return {
     name: "manus-debug-collector",
 
-    transformIndexHtml(html) {
-      if (process.env.NODE_ENV === "production") {
-        return html;
-      }
+    transformIndexHtml(html, ctx) {
+      if (!ctx.server) return html;
       return {
         html,
         tags: [
@@ -149,39 +148,74 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+function vitePluginAnalytics(endpoint: string | undefined, websiteId: string | undefined): Plugin {
+  return {
+    name: "analytics-html",
+    transformIndexHtml(html, ctx) {
+      if (!endpoint || !websiteId) return html;
 
-export default defineConfig({
-  plugins,
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      return {
+        html,
+        tags: [
+          {
+            tag: "script",
+            attrs: {
+              defer: true,
+              src: `${endpoint.replace(/\/$/, "")}/umami`,
+              "data-website-id": websiteId,
+            },
+            injectTo: "body",
+          },
+        ],
+      };
     },
-  },
-  envDir: path.resolve(import.meta.dirname),
-  root: path.resolve(import.meta.dirname, "client"),
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    port: 3000,
-    strictPort: false, // Will find next available port if 3000 is busy
-    host: true,
-    allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
-      "localhost",
-      "127.0.0.1",
-    ],
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+  };
+}
+
+export default defineConfig(({ command, mode }) => {
+  const env = loadEnv(mode, PROJECT_ROOT, "VITE_");
+  const plugins = [
+    react(),
+    tailwindcss(),
+    vitePluginAnalytics(env.VITE_ANALYTICS_ENDPOINT, env.VITE_ANALYTICS_WEBSITE_ID),
+    vitePluginManusRuntime(),
+  ];
+  if (command === "serve") {
+    plugins.push(vitePluginManusDebugCollector());
+  }
+
+  return {
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(PROJECT_ROOT, "client", "src"),
+        "@shared": path.resolve(PROJECT_ROOT, "shared"),
+        "@assets": path.resolve(PROJECT_ROOT, "attached_assets"),
+      },
     },
-  },
+    envDir: path.resolve(PROJECT_ROOT),
+    root: path.resolve(PROJECT_ROOT, "client"),
+    build: {
+      outDir: path.resolve(PROJECT_ROOT, "dist/public"),
+      emptyOutDir: true,
+    },
+    server: {
+      port: 3000,
+      strictPort: false, // Will find next available port if 3000 is busy
+      host: true,
+      allowedHosts: [
+        ".manuspre.computer",
+        ".manus.computer",
+        ".manus-asia.computer",
+        ".manuscomputer.ai",
+        ".manusvm.computer",
+        "localhost",
+        "127.0.0.1",
+      ],
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
+      },
+    },
+  };
 });
