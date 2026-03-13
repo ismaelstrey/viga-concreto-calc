@@ -4,7 +4,7 @@
  * Layout: Painel esquerdo inputs, área central/direita visualizações
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Zap, Save } from "lucide-react";
 import { DimensionsInput } from "@/components/DimensionsInput";
@@ -14,9 +14,24 @@ import { useBeamCalculator } from "@/hooks/useBeamCalculator";
 import { Visualization2D } from "@/components/Visualization2D";
 import { Visualization3D } from "@/components/Visualization3D";
 import { WeightDistributionChart } from "@/components/WeightDistributionChart";
+import { generateDecisionSupport } from "@/lib/beamCalculations";
+import { DecisionSupportPanel } from "@/components/DecisionSupportPanel";
+import { EffortDiagram2D } from "@/components/EffortDiagram2D";
 
 export default function Home() {
   const calculator = useBeamCalculator();
+  const decisionSupport = useMemo(() => {
+    if (!calculator.results) {
+      return null;
+    }
+
+    return generateDecisionSupport(
+      calculator.dimensions,
+      calculator.loads,
+      calculator.reinforcement,
+      calculator.results
+    );
+  }, [calculator.dimensions, calculator.loads, calculator.reinforcement, calculator.results]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -254,6 +269,16 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+
+                {decisionSupport && (
+                  <DecisionSupportPanel decisionSupport={decisionSupport} />
+                )}
+
+                <EffortDiagram2D
+                  dimensions={calculator.dimensions}
+                  loads={calculator.loads}
+                  results={calculator.results}
+                />
               </>
             ) : (
               <div className="h-96 bg-card border border-border rounded-lg flex items-center justify-center">
