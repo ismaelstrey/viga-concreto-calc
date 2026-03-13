@@ -16,6 +16,7 @@ import { Visualization3D } from "@/components/Visualization3D";
 import { WeightDistributionChart } from "@/components/WeightDistributionChart";
 import { generateDecisionSupport } from "@/lib/beamCalculations";
 import { DecisionSupportPanel } from "@/components/DecisionSupportPanel";
+import { EffortDiagram2D } from "@/components/EffortDiagram2D";
 
 export default function Home() {
   const calculator = useBeamCalculator();
@@ -272,6 +273,12 @@ export default function Home() {
                 {decisionSupport && (
                   <DecisionSupportPanel decisionSupport={decisionSupport} />
                 )}
+
+                <EffortDiagram2D
+                  dimensions={calculator.dimensions}
+                  loads={calculator.loads}
+                  results={calculator.results}
+                />
               </>
             ) : (
               <div className="h-96 bg-card border border-border rounded-lg flex items-center justify-center">
